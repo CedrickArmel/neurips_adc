@@ -57,22 +57,18 @@ resource "google_service_account" "gcp_iam_infra_sa" {
   create_ignore_already_exists = true
 }
 
-resource "google_project_iam_member" "gcp_iam_infra_owner" {
-  project = var.gcp_project
-  role    = "roles/owner"
-  member  = google_service_account.gcp_iam_infra_sa.member
-}
-
-resource "google_project_iam_member" "gcp_serviceusage_admin" {
-  project = var.gcp_project
-  role    = "roles/serviceusage.serviceUsageAdmin"
-  member  = google_service_account.gcp_iam_infra_sa.member
+# Bind roles to the Infrastructure Service Account using var.infra_sa_roles
+resource "google_project_iam_member" "infra_sa_roles_binding" {
+  for_each = toset(var.infra_sa_roles)
+  project  = var.gcp_project
+  role     = each.value
+  member   = google_service_account.gcp_iam_infra_sa.member
 }
 
 #####################################
 # Create Workload identity (WI) Pools
 resource "google_iam_workload_identity_pool" "gcp_wi_infra_pool" {
-  workload_identity_pool_id = "infra-pool"
+  workload_identity_pool_id = "infra-pool-1"
   display_name              = "Infrastructure pool"
   description               = "Group all externals applications that need communication with GCP to perform infrastructure lifecyle management."
   disabled                  = false
@@ -153,61 +149,36 @@ resource "tfe_workspace_variable_set" "gcp_hcp_apply_variable_set" {
 
 ##########################
 # Create Services Accounts (SA)
-resource "google_service_account" "gcp_ml_sa" {
-  account_id                   = var.gcp_ml_sa_account_id
-  display_name                 = "Core ML Service Account to manage necessary services for AI/ML workloads."
+resource "google_service_account" "gcp_sa" {
+  for_each                     = var.gcp_service_accounts
+  account_id                   = each.value.sa_id
+  display_name                 = each.value.name
   create_ignore_already_exists = true
   depends_on                   = [tfe_workspace_variable_set.gcp_hcp_apply_variable_set]
 }
 
-###################
-# Bind roles to SA
-resource "google_project_iam_member" "gcp_cloudbuild_builds_editor" {
-  project = var.gcp_project
-  role    = "roles/cloudbuild.builds.editor"
-  member  = google_service_account.gcp_ml_sa.member
+locals {
+  sa_roles = flatten([
+    for sa_key, sa_value in var.gcp_service_accounts : [
+      for role in sa_value.roles : {
+        sa_key = sa_key
+        role   = role
+      }
+    ]
+  ])
+}
+resource "google_project_iam_member" "gcp_sa_roles" {
+  for_each = { for sa_role in local.sa_roles : "${sa_role.sa_key}-${sa_role.role}" => sa_role }
+  project  = var.gcp_project
+  role     = each.value.role
+  member   = google_service_account.gcp_sa[each.value.sa_key].member
 }
 
-resource "google_project_iam_member" "gcp_cloudbuild_integrations_editor" {
-  project = var.gcp_project
-  role    = "roles/cloudbuild.integrations.editor"
-  member  = google_service_account.gcp_ml_sa.member
-}
-
-resource "google_project_iam_member" "gcp_secret_accessor" {
-  project = var.gcp_project
-  role    = "roles/secretmanager.secretAccessor"
-  member  = google_service_account.gcp_ml_sa.member
-}
-
-resource "google_project_iam_member" "gcp_cloudstorage_user" {
-  project = var.gcp_project
-  role    = "roles/storage.objectUser"
-  member  = google_service_account.gcp_ml_sa.member
-}
-
-resource "google_project_iam_member" "gcp_aiplatform_user" {
-  project = var.gcp_project
-  role    = "roles/aiplatform.user"
-  member  = google_service_account.gcp_ml_sa.member
-}
-
-resource "google_project_iam_member" "gcp_aiplatform_developer" {
-  project = var.gcp_project
-  role    = "roles/ml.developer"
-  member  = google_service_account.gcp_ml_sa.member
-}
-
-resource "google_project_iam_member" "gcp_artifactregistry_createonpushwriter" {
-  project = var.gcp_project
-  role    = "roles/artifactregistry.createOnPushWriter"
-  member  = google_service_account.gcp_ml_sa.member
-}
 
 #####################################
 # Create Workload identity (WI) Pools
 resource "google_iam_workload_identity_pool" "gcp_wi_mlops_pool" {
-  workload_identity_pool_id = "mlops-pool"
+  workload_identity_pool_id = "mlops-pool-1"
   display_name              = "MLOps pool"
   description               = "Group all externals applications that need communication with GCP to perform CI/CD/CT."
   disabled                  = false
@@ -236,7 +207,7 @@ resource "google_iam_workload_identity_pool_provider" "gcp_gha_oidc_provider" {
 ################################
 # SA impersonations by providers
 resource "google_service_account_iam_member" "gcp_ml_sa_impersonate_by_gha_oidc_provider" {
-  service_account_id = google_service_account.gcp_ml_sa.name
+  service_account_id = google_service_account.gcp_sa["gcp_ml_sa"].name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.gcp_wi_mlops_pool.name}/*"
 }
@@ -244,9 +215,8 @@ resource "google_service_account_iam_member" "gcp_ml_sa_impersonate_by_gha_oidc_
 
 ###############################
 # Enable services API
-
-resource "google_project_services" "gcp_enable_services" {
-  project    = var.gcp_project
-  services   = ["iam.googleapis.com", "cloudresourcemanager.googleapis.com"]
-  depends_on = [tfe_workspace_variable_set.gcp_hcp_apply_variable_set]
+resource "google_project_service" "gcp_enable_services" {
+  for_each = toset(var.gcp_enabled_services)
+  project  = var.gcp_project
+  service  = each.value
 }
