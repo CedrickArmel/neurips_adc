@@ -1,0 +1,37 @@
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.poetry]
+license = "LICENSE"
+name = "neuripsadc"
+version = "0.1.0"
+description = "This GitHub repository contains all of my work as a participant in the Kaggle NeurIPS - Ariel Data Challenge 2024 competition."
+authors = ["Yebouet Cédrick-Armel <cedrickarmelyebouet@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "neuripsadc", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.1.1"
+mypy = "^1.11.2"
+flake8 = "^7.1.1"
+pylint = "^3.2.7"
+black = "^24.8.0"
+isort = "^5.13.2"
+pytest = "^8.3.2"
+pre-commit = "^3.8.0"
+tox = "^4.18.0"
+tox-gh-actions = "^3.2.0"
+kaggle = "^1.6.17"
+
+[tool.pylint.format]
+max-line-length = "88"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
