@@ -1,3 +1,6 @@
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
+
 # NeurIPS - Ariel Data Challenge (ADC) 2024
 
 ## Description
