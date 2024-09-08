@@ -1,5 +1,59 @@
 ###########
 # Variables
+
+variable "gcp_enabled_services" {
+  description = "List of services to enable on the ML platform"
+  type        = list(string)
+  default = [
+    "aiplatform.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "container.googleapis.com",
+    "containeranalysis.googleapis.com",
+    "containerregistry.googleapis.com",
+    "datacatalog.googleapis.com",
+    "dataflow.googleapis.com",
+    "dataform.googleapis.com",
+    "iam.googleapis.com",
+    "ml.googleapis.com",
+    "notebooks.googleapis.com",
+    "vision.googleapis.com",
+  ]
+}
+variable "infra_sa_roles" {
+  description = "List of roles to bind to this service account"
+  type        = list(string)
+  default = [
+    "roles/owner",
+    "roles/serviceusage.serviceUsageAdmin"
+  ]
+}
+
+variable "gcp_service_accounts" {
+  description = "A map of service account configurations, including roles, account ID, and description."
+  type = map(object({
+    roles = list(string)
+    sa_id = string
+    name  = string
+  }))
+  default = {
+    gcp_ml_sa = {
+      roles = [
+        "roles/cloudbuild.builds.editor",
+        "roles/cloudbuild.integrations.editor",
+        "roles/secretmanager.secretAccessor",
+        "roles/storage.objectUser",
+        "roles/aiplatform.user",
+        "roles/ml.developer",
+        "roles/artifactregistry.createOnPushWriter"
+      ]
+      sa_id = "neurips-ml-sa"
+      name  = "Core ML tasks SA"
+    }
+  }
+}
+
+
 variable "gha_assertion_aud" {
   description = "GHA workload identity JWk token aud attribute"
   type        = string
@@ -23,12 +77,6 @@ variable "gha_assertion_actor" {
 # Secrets
 variable "gcp_iam_infra_sa_account_id" {
   description = "Core IAM & Infra LC management SA"
-  type        = string
-  sensitive   = true
-}
-
-variable "gcp_ml_sa_account_id" {
-  description = "Core ML tasks SA"
   type        = string
   sensitive   = true
 }
