@@ -1,9 +1,34 @@
+###########
+# Variables
+variable "gha_assertion_aud" {
+  description = "GHA workload identity JWk token aud attribute"
+  type        = string
+  default     = "https://github.com/CedrickArmel"
+}
+
+variable "gha_assertion_sub" {
+  description = "GHA workload identity JWk token sub attribute"
+  type        = string
+  default     = "CedrickArmel/neurips_adc:ref:refs/heads/main"
+}
+
+variable "gha_assertion_actor" {
+  description = "GHA workload identity JWk token actor attribute"
+  type        = string
+  default     = "CedrickArmel"
+}
+
+
 #########
 # Secrets
-
-# Terraform
 variable "gcp_iam_infra_sa_account_id" {
   description = "Core IAM & Infra LC management SA"
+  type        = string
+  sensitive   = true
+}
+
+variable "gcp_ml_sa_account_id" {
+  description = "Core ML tasks SA"
   type        = string
   sensitive   = true
 }
@@ -37,5 +62,3 @@ variable "hcp_terraform_ws_name" {
   type        = string
   sensitive   = true
 }
-
-# Main
