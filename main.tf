@@ -76,7 +76,7 @@ resource "google_project_iam_member" "infra_sa_roles_binding" {
 #####################################
 # Create Workload identity (WI) Pools
 resource "google_iam_workload_identity_pool" "gcp_wi_infra_pool" {
-  workload_identity_pool_id = "infra-pool-2"
+  workload_identity_pool_id = "infra-pool-3"
   display_name              = "Infrastructure pool"
   description               = "Group all externals applications that need communication with GCP to perform infrastructure lifecyle management."
   disabled                  = false
@@ -186,7 +186,7 @@ resource "google_project_iam_member" "gcp_sa_roles" {
 #####################################
 # Create Workload identity (WI) Pools
 resource "google_iam_workload_identity_pool" "gcp_wi_mlops_pool" {
-  workload_identity_pool_id = "mlops-pool-2"
+  workload_identity_pool_id = "mlops-pool-3"
   display_name              = "MLOps pool"
   description               = "Group all externals applications that need communication with GCP to perform CI/CD/CT."
   disabled                  = false
