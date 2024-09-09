@@ -110,3 +110,9 @@ variable "hcp_terraform_ws_name" {
   type        = string
   sensitive   = true
 }
+
+variable "tfe_token" {
+  description = "Token to authenticate TFE provider"
+  type        = string
+  sensitive   = true
+}
