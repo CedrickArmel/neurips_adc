@@ -19,6 +19,11 @@ terraform {
       source  = "hashicorp/google-beta"
       version = "6.1.0"
     }
+
+    tfe = {
+      source  = "hashicorp/tfe"
+      version = "0.58.1"
+    }
   }
 }
 
@@ -33,6 +38,9 @@ provider "google" {
 provider "google-beta" {
   project = var.gcp_project
   region  = var.gcp_region
+}
+provider "tfe" {
+  token = var.tfe_token
 }
 
 ########################
