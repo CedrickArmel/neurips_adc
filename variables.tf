@@ -20,6 +20,15 @@ variable "gcp_enabled_services" {
     "vision.googleapis.com",
   ]
 }
+
+variable "gcp_created_folders" {
+  description = "List of folders to create in the main bucket on the ML platform"
+  type        = list(string)
+  default = [
+    "raw/"
+  ]
+}
+
 variable "infra_sa_roles" {
   description = "List of roles to bind to this service account"
   type        = list(string)
