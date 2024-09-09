@@ -228,3 +228,20 @@ resource "google_project_service" "gcp_enable_services" {
   project  = var.gcp_project
   service  = each.value
 }
+
+################################
+# Create buckets
+
+resource "google_storage_bucket" "gcp_bucket" {
+  name                     = "${var.gcp_project}-bucket"
+  location                 = upper(var.gcp_region)
+  force_destroy            = true
+  public_access_prevention = "enforced"
+}
+
+resource "google_storage_bucket_object" "gcp_bucket_folders" {
+  for_each = toset(var.gcp_created_folders)
+  name     = each.value
+  content  = " "
+  bucket   = google_storage_bucket.gcp_bucket.name
+}
