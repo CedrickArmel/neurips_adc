@@ -50,13 +50,17 @@ variable "gcp_service_accounts" {
   default = {
     gcp_ml_sa = {
       roles = [
+        "roles/aiplatform.user",
+        "roles/artifactregistry.createOnPushWriter",
         "roles/cloudbuild.builds.editor",
         "roles/cloudbuild.integrations.editor",
+        "roles/cloudscheduler.admin",
+        "roles/dataflow.developer",
+        "roles/dataform.editor",
+        "roles/datapipelines.admin",
+        "roles/ml.developer",
         "roles/secretmanager.secretAccessor",
         "roles/storage.objectUser",
-        "roles/aiplatform.user",
-        "roles/ml.developer",
-        "roles/artifactregistry.createOnPushWriter"
       ]
       sa_id = "neurips-ml-sa"
       name  = "Core ML tasks SA"
