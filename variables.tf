@@ -14,6 +14,8 @@ variable "gcp_enabled_services" {
     "datacatalog.googleapis.com",
     "dataflow.googleapis.com",
     "dataform.googleapis.com",
+    "datapipelines.googleapis.com",
+    "cloudscheduler.googleapis.com",
     "iam.googleapis.com",
     "ml.googleapis.com",
     "notebooks.googleapis.com",
