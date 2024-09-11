@@ -245,3 +245,23 @@ resource "google_storage_bucket_object" "gcp_bucket_folders" {
   content  = " "
   bucket   = google_storage_bucket.gcp_bucket.name
 }
+
+######################################
+# Notebooks
+resource "google_workbench_instance" "gcp_workbench_instance" {
+  name     = "${var.gcp_project}-wbi"
+  location = "${var.gcp_region}-a"
+
+  gce_setup {
+    machine_type = "n1-standard-4" // cant be e2 because of accelerator
+    data_disks {
+      disk_size_gb = 320
+      disk_type    = "PD_STANDARD"
+    }
+    metadata = {
+      terraform = "true"
+    }
+    tags = ["terraform"]
+  }
+  desired_state = "STOPPED"
+}
