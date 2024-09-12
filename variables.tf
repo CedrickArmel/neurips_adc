@@ -102,6 +102,16 @@ variable "gcp_project" {
   sensitive   = true
 }
 
+variable "gcp_gh_pat" {
+  description = "GitHub Personal Access Token"
+  type        = string
+  sensitive   = true
+}
+variable "gcp_gh_token_secret_id" {
+  description = "ID of the secret used to authenticate the connection to GitHub."
+  type        = string
+  sensitive   = true
+}
 variable "gcp_region" {
   description = "Google Cloud region to deploy on"
   type        = string

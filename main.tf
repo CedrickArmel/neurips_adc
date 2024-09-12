@@ -45,7 +45,7 @@ provider "tfe" {
 
 ########################
 # Data sources
-
+data "google_project" "gcp_project" {}
 data "tfe_workspace" "workspace" {
   name         = "neurips_adc"
   organization = "mienmo"
@@ -264,4 +264,57 @@ resource "google_workbench_instance" "gcp_workbench_instance" {
     tags = ["terraform"]
   }
   desired_state = "STOPPED"
+}
+
+#####################################
+# Cloud build
+
+// Create a secret containing the personal access token and grant permissions to the Service Agent
+resource "google_secret_manager_secret" "gcp_github_token_secret" {
+  project   = var.gcp_project
+  secret_id = var.gcp_gh_token_secret_id
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "gcp_github_token_secret_version" {
+  secret      = google_secret_manager_secret.gcp_github_token_secret.id
+  secret_data = var.gcp_gh_pat
+}
+
+data "google_iam_policy" "serviceagent_secretAccessor" {
+  binding {
+    role    = "roles/secretmanager.secretAccessor"
+    members = ["serviceAccount:service-${data.google_project.gcp_project.number}@gcp-sa-cloudbuild.iam.gserviceaccount.com"]
+  }
+}
+
+resource "google_secret_manager_secret_iam_policy" "policy" {
+  project     = google_secret_manager_secret.gcp_github_token_secret.project
+  secret_id   = google_secret_manager_secret.gcp_github_token_secret.secret_id
+  policy_data = data.google_iam_policy.serviceagent_secretAccessor.policy_data
+}
+
+// Create the GitHub connection
+resource "google_cloudbuildv2_connection" "gcp_github_connexion" {
+  project  = var.gcp_project
+  location = var.gcp_region
+  name     = "GitHub"
+  github_config {
+    authorizer_credential {
+      oauth_token_secret_version = google_secret_manager_secret_version.gcp_github_token_secret_version.id
+    }
+  }
+  depends_on = [google_secret_manager_secret_iam_policy.policy]
+}
+
+# Connect a repository
+resource "google_cloudbuildv2_repository" "github_repo" {
+  project           = var.gcp_project
+  location          = var.gcp_region
+  name              = "neurips_adc"
+  parent_connection = google_cloudbuildv2_connection.gcp_github_connexion.name
+  remote_uri        = "https://github.com/CedrickArmel/neurips_adc.git"
 }

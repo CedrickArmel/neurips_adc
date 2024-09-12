@@ -26,7 +26,7 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-added-large-files
-        exclude: "pdf$"
+        exclude: "pdf$|ipynb$"
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-executables-have-shebangs
