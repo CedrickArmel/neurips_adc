@@ -277,6 +277,7 @@ resource "google_secret_manager_secret" "gcp_github_token_secret" {
   replication {
     auto {}
   }
+  depends_on = [google_project_service.gcp_enable_services]
 }
 
 resource "google_secret_manager_secret_version" "gcp_github_token_secret_version" {
