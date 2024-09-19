@@ -324,7 +324,7 @@ resource "google_cloudbuildv2_repository" "github_repo" {
 # VMs
 
 resource "google_service_account" "gcp_vm_sa" {
-  account_id   = "vm-sa"
+  account_id   = "virtual-machine-sa"
   display_name = "Custom SA for VM Instance"
 }
 data "template_file" "linux-metadata" {
