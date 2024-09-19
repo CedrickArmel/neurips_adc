@@ -318,3 +318,49 @@ resource "google_cloudbuildv2_repository" "github_repo" {
   parent_connection = google_cloudbuildv2_connection.gcp_github_connexion.name
   remote_uri        = "https://github.com/CedrickArmel/neurips_adc.git"
 }
+
+######################################
+# VMs
+resource "google_compute_disk" "gcp_persistent_disk" {
+  name  = "neurips-adc-disk"
+  type  = "pd-ssd"
+  zone  = "${var.gcp_region}-a"
+  image = "debian-11-bullseye-v20220719"
+  size  = 200
+}
+
+data "template_file" "linux-metadata" {
+  template = <<EOF
+sudo apt-get update;
+sudo apt-get install -yq apt-transport-https autoconf \
+automake build-essential ca-certificates clang clang-format-12 colordiff cpio file ffmpeg flex g++ gdb \
+git jq less libbz2-dev libcurl3-dev libcurl4-openssl-dev libffi-dev libfreetype6-dev libhdf5-dev libhdf5-serial-dev \
+liblzma-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libsqlite3-dev libtool libxml2-dev libxmlsec1-dev \
+libzmq3-dev lld llvm make mlocate moreutils netbase openjdk-21-jdk openjdk-21-jre-headless patch pkg-config python3-dev \
+python3-setuptools rpm2cpio rsync software-properties-common swig tk-dev tzdata unar unzip vim xz-utils zlib1g-dev;
+EOF
+}
+
+resource "google_compute_instance" "gcp_vm" {
+  name         = "neurips-adc-vm"
+  zone         = "${var.gcp_region}-a"
+  machine_type = "n2-standard-2"
+
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-os-cloud/ubuntu-2004-lts"
+    }
+  }
+  scratch_disk {
+    interface = "NVME"
+  }
+
+  network_interface {
+    network = "default"
+    access_config {}
+  }
+  attached_disk {
+    source = google_compute_disk.gcp_persistent_disk.name
+  }
+  metadata_startup_script = data.template_file.linux-metadata.rendered
+}
