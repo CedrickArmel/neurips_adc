@@ -322,6 +322,11 @@ resource "google_cloudbuildv2_repository" "github_repo" {
 
 ######################################
 # VMs
+
+resource "google_service_account" "gcp_vm_sa" {
+  account_id   = "vm-sa"
+  display_name = "Custom SA for VM Instance"
+}
 data "template_file" "linux-metadata" {
   template = <<EOF
 sudo apt-get update;
@@ -366,4 +371,8 @@ resource "google_compute_instance" "gcp_vm" {
     access_config {}
   }
   metadata_startup_script = data.template_file.linux-metadata.rendered
+  service_account {
+    email  = google_service_account.gcp_vm_sa.email
+    scopes = ["cloud-platform"]
+  }
 }
