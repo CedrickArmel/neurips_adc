@@ -22,6 +22,7 @@ variable "gcp_enabled_services" {
     "monitoring.googleapis.com",
     "networkmanagement.googleapis.com",
     "notebooks.googleapis.com",
+    "secretmanager.googleapis.com",
     "vision.googleapis.com",
   ]
 }
