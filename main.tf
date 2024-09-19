@@ -322,14 +322,6 @@ resource "google_cloudbuildv2_repository" "github_repo" {
 
 ######################################
 # VMs
-resource "google_compute_disk" "gcp_persistent_disk" {
-  name  = "neurips-adc-disk"
-  type  = "pd-ssd"
-  zone  = "${var.gcp_region}-a"
-  image = "debian-11-bullseye-v20220719"
-  size  = 200
-}
-
 data "template_file" "linux-metadata" {
   template = <<EOF
 sudo apt-get update;
@@ -339,6 +331,17 @@ git jq less libbz2-dev libcurl3-dev libcurl4-openssl-dev libffi-dev libfreetype6
 liblzma-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libsqlite3-dev libtool libxml2-dev libxmlsec1-dev \
 libzmq3-dev lld llvm make mlocate moreutils netbase openjdk-21-jdk openjdk-21-jre-headless patch pkg-config python3-dev \
 python3-setuptools rpm2cpio rsync software-properties-common swig tk-dev tzdata unar unzip vim xz-utils zlib1g-dev;
+curl https://pyenv.run | bash;
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc;
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc;
+echo 'eval "$(pyenv init -)"' >> ~/.bashrc;
+echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc;
+source ~/.bashrc;
+pyenv install 3.10.13 && pyenv global 3.10.13;
+curl -sSL https://install.python-poetry.org | python3 - --version 1.8.3;
+echo 'export PATH="/home/drxc/.local/bin:$PATH"' >> ~/.bashrc;
+source ~/.bashrc;
+git config --global user.name "CedrickArmel" && git config --global user.email "35418979+CedrickArmel@users.noreply.github.com"
 EOF
 }
 
@@ -350,6 +353,8 @@ resource "google_compute_instance" "gcp_vm" {
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2004-lts"
+      size  = 500
+      type  = "pd-standard"
     }
   }
   scratch_disk {
@@ -359,9 +364,6 @@ resource "google_compute_instance" "gcp_vm" {
   network_interface {
     network = "default"
     access_config {}
-  }
-  attached_disk {
-    source = google_compute_disk.gcp_persistent_disk.name
   }
   metadata_startup_script = data.template_file.linux-metadata.rendered
 }
