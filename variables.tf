@@ -17,7 +17,10 @@ variable "gcp_enabled_services" {
     "datapipelines.googleapis.com",
     "cloudscheduler.googleapis.com",
     "iam.googleapis.com",
+    "iap.googleapis.com",
     "ml.googleapis.com",
+    "monitoring.googleapis.com",
+    "networkmanagement.googleapis.com",
     "notebooks.googleapis.com",
     "vision.googleapis.com",
   ]
