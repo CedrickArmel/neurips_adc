@@ -375,4 +375,5 @@ resource "google_compute_instance" "gcp_vm" {
     email  = google_service_account.gcp_vm_sa.email
     scopes = ["cloud-platform"]
   }
+  allow_stopping_for_update = true
 }
