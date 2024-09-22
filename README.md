@@ -27,8 +27,8 @@ Exoplanet signals are corrupted by noise, particularly "jitter noise" making it 
 
 To install this project you need these dependencies installed:
 
-- Python `^3.12`
-- [Poetry](https://python-poetry.org/docs/)
+- Python `">=3.10,<3.11"`
+- [Poetry](https://python-poetry.org/docs/) `1.8.3`
 
 ### Clone the project
 
