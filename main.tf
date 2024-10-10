@@ -290,7 +290,7 @@ resource "google_secret_manager_secret_version" "gcp_secret_versions" {
 data "google_iam_policy" "serviceagent_secretAccessor" {
   binding {
     role    = "roles/secretmanager.secretAccessor"
-    members = ["serviceAccount:service-${data.google_project.gcp_project.number}@gcp-sa-cloudbuild.iam.gserviceaccount.com"]
+    members = ["serviceAccount:${data.google_project.gcp_project.number}@cloudbuild.gserviceaccount.com"]
   }
 }
 
