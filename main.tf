@@ -331,8 +331,9 @@ resource "google_cloudbuildv2_repository" "github_repo" {
 
 resource "google_cloudbuild_trigger" "gcp_build_trigger" {
   location = var.gcp_region
-  name     = "Build base image"
+  name     = "build-base-image"
   filename = ".cloudbuild/build_image.yaml"
+  service_account = google_service_account.gcp_sa["gcp_ml_sa"].id
   github {
     owner = "CedrickArmel"
     name  = "neurips_adc"
