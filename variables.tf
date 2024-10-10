@@ -133,6 +133,16 @@ variable "gcp_secrets" {
   sensitive = true
 }
 
+variable "gcp_secrets_keys" {
+  type = set(string)
+  default = [
+    "bucket_secret",
+    "docker_username",
+    "docker_token",
+    "gh_pat_secret"
+  ]
+}
+
 variable "hcp_terraform_org_name" {
   description = "Organization name in HCP Terraform Cloud"
   type        = string

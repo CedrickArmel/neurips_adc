@@ -269,9 +269,9 @@ resource "google_workbench_instance" "gcp_workbench_instance" {
 #####################################
 # Secrets Manager: Create secrets
 resource "google_secret_manager_secret" "gcp_sm_secrets" {
-  for_each = var.gcp_secrets
+  for_each = var.gcp_secrets_keys
   project   = var.gcp_project
-  secret_id = each.value.id
+  secret_id = var.gcp_secrets[each.key].id
   replication {
     auto {}
   }
@@ -279,9 +279,9 @@ resource "google_secret_manager_secret" "gcp_sm_secrets" {
 }
 
 resource "google_secret_manager_secret_version" "gcp_secret_versions" {
-  for_each = var.gcp_secrets
+  for_each = var.gcp_secrets_keys
   secret      = google_secret_manager_secret.gcp_sm_secrets[each.key].id
-  secret_data = each.value.data
+  secret_data = var.gcp_secrets[each.key].data
 }
 
 #####################################
@@ -295,7 +295,7 @@ data "google_iam_policy" "serviceagent_secretAccessor" {
 }
 
 resource "google_secret_manager_secret_iam_policy" "gcp_secrets_policy" {
-  for_each = var.gcp_secrets
+  for_each = var.gcp_secrets_keys
   project     = google_secret_manager_secret.gcp_sm_secrets[each.key].project
   secret_id   = google_secret_manager_secret.gcp_sm_secrets[each.key].secret_id
   policy_data = data.google_iam_policy.serviceagent_secretAccessor.policy_data
