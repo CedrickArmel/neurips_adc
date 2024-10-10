@@ -267,23 +267,25 @@ resource "google_workbench_instance" "gcp_workbench_instance" {
 }
 
 #####################################
-# Cloud build
-
-// Create a secret containing the personal access token and grant permissions to the Service Agent
-resource "google_secret_manager_secret" "gcp_github_token_secret" {
+# Secrets Manager: Create secrets
+resource "google_secret_manager_secret" "gcp_sm_secrets" {
+  for_each = var.gcp_secrets_keys
   project   = var.gcp_project
-  secret_id = var.gcp_gh_token_secret_id
-
+  secret_id = var.gcp_secrets[each.key].id
   replication {
     auto {}
   }
   depends_on = [google_project_service.gcp_enable_services]
 }
 
-resource "google_secret_manager_secret_version" "gcp_github_token_secret_version" {
-  secret      = google_secret_manager_secret.gcp_github_token_secret.id
-  secret_data = var.gcp_gh_pat
+resource "google_secret_manager_secret_version" "gcp_secret_versions" {
+  for_each = var.gcp_secrets_keys
+  secret      = google_secret_manager_secret.gcp_sm_secrets[each.key].id
+  secret_data = var.gcp_secrets[each.key].data
 }
+
+#####################################
+# Give acces to secrets
 
 data "google_iam_policy" "serviceagent_secretAccessor" {
   binding {
@@ -292,11 +294,15 @@ data "google_iam_policy" "serviceagent_secretAccessor" {
   }
 }
 
-resource "google_secret_manager_secret_iam_policy" "policy" {
-  project     = google_secret_manager_secret.gcp_github_token_secret.project
-  secret_id   = google_secret_manager_secret.gcp_github_token_secret.secret_id
+resource "google_secret_manager_secret_iam_policy" "gcp_secrets_policy" {
+  for_each = var.gcp_secrets_keys
+  project     = google_secret_manager_secret.gcp_sm_secrets[each.key].project
+  secret_id   = google_secret_manager_secret.gcp_sm_secrets[each.key].secret_id
   policy_data = data.google_iam_policy.serviceagent_secretAccessor.policy_data
 }
+
+#####################################
+# Cloud build: Repository
 
 // Create the GitHub connection
 resource "google_cloudbuildv2_connection" "gcp_github_connexion" {
@@ -305,10 +311,10 @@ resource "google_cloudbuildv2_connection" "gcp_github_connexion" {
   name     = "GitHub"
   github_config {
     authorizer_credential {
-      oauth_token_secret_version = google_secret_manager_secret_version.gcp_github_token_secret_version.id
+      oauth_token_secret_version = google_secret_manager_secret_version.gcp_secret_versions["gh_pat_secret"].id
     }
   }
-  depends_on = [google_secret_manager_secret_iam_policy.policy]
+  depends_on = [google_secret_manager_secret_iam_policy.gcp_secrets_policy]
 }
 
 # Connect a repository
@@ -319,6 +325,28 @@ resource "google_cloudbuildv2_repository" "github_repo" {
   parent_connection = google_cloudbuildv2_connection.gcp_github_connexion.name
   remote_uri        = "https://github.com/CedrickArmel/neurips_adc.git"
 }
+
+#####################################
+# Cloud build: Repository
+
+resource "google_cloudbuild_trigger" "gcp_build_trigger" {
+  location = var.gcp_region
+  name     = "Build base image"
+  filename = ".cloudbuild/build_image.yaml"
+  github {
+    owner = "CedrickArmel"
+    name  = "neurips_adc"
+    push {
+      branch = "^main$"
+    }
+  }
+  substitutions = {
+    _DEVICE = "gpu"
+    _PYTHONVERSION = "3.10.13"
+    _BASE_VERSION = "20.04"
+  }
+}
+
 
 ######################################
 # VMs
@@ -353,7 +381,7 @@ EOF
 resource "google_compute_instance" "gcp_vm" {
   name         = "neurips-adc-vm"
   zone         = "${var.gcp_region}-a"
-  machine_type = "n2-standard-2"
+  machine_type = "n2-standard-8"
 
   boot_disk {
     initialize_params {

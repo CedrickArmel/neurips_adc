@@ -31,7 +31,9 @@ variable "gcp_created_folders" {
   description = "List of folders to create in the main bucket on the ML platform"
   type        = list(string)
   default = [
-    "raw/"
+    "raw/",
+    "primary/",
+    "pipeline_root/"
   ]
 }
 
@@ -120,6 +122,25 @@ variable "gcp_region" {
   description = "Google Cloud region to deploy on"
   type        = string
   sensitive   = true
+}
+
+variable "gcp_secrets" {
+  description = "Secrets stored in GCP SecretManager"
+  type = map(object({
+    id = string
+    data = string
+  }))
+  sensitive = true
+}
+
+variable "gcp_secrets_keys" {
+  type = set(string)
+  default = [
+    "bucket_secret",
+    "docker_username",
+    "docker_token",
+    "gh_pat_secret"
+  ]
 }
 
 variable "hcp_terraform_org_name" {

@@ -1,0 +1,38 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  id: build_for_gcp_artifact_registry
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    echo "BUCKET=$$BUCKET" >> .env
+    echo "IMAGE=$LOCATION-docker.pkg.dev/$PROJECT_ID/${_IMAGE}:gpu" >> .env
+    echo "PROJECT_ID=$PROJECT_ID" >> .env
+    echo "REGION=$LOCATION" >> .env
+    docker login --username=$$DOCKERHUB_USERNAME --password=$$DOCKERHUB_TOKEN
+    docker buildx create --name=container --driver=docker-container --use
+    docker buildx build -f Dockerfile \
+    -t $LOCATION-docker.pkg.dev/$PROJECT_ID/${_IMAGE}:${_DEVICE} \
+    --builder=container \
+    --platform=linux/amd64 \
+    --build-arg PYTHONVERSION=${_PYTHONVERSION} \
+    --build-arg BASE_VERSION=${_BASE_VERSION} \
+    --build-arg DEVICE=${_DEVICE} \
+    --cache-to "type=registry,ref=${_IMAGE}:${_DEVICE}-cache,mode=max" \
+    --cache-from "type=registry,ref=${_IMAGE}:${_DEVICE}-cache" \
+    --push .
+  secretEnv:
+    - BUCKET
+    - DOCKERHUB_USERNAME
+    - DOCKERHUB_TOKEN
+logsBucket: ${_LOG_BUCKET}
+options:
+  machineType: 'E2_HIGHCPU_32'
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_NUMBER/secrets/neurips-adc-docker-username/versions/1
+      env: DOCKERHUB_USERNAME
+    - versionName: projects/$PROJECT_NUMBER/secrets/neurips-adc-docker-token/versions/1
+      env: DOCKERHUB_TOKEN
+    - versionName: projects/$PROJECT_NUMBER/secrets/bucket_secret/versions/1
+      env: BUCKET
