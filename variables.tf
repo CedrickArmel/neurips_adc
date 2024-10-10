@@ -122,6 +122,15 @@ variable "gcp_region" {
   sensitive   = true
 }
 
+variable "gcp_secrets" {
+  description = "Secrets stored in GCP SecretManager"
+  type = map(object({
+    id = string
+    data = string
+  }))
+  sensitive = true
+}
+
 variable "hcp_terraform_org_name" {
   description = "Organization name in HCP Terraform Cloud"
   type        = string
