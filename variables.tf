@@ -31,7 +31,9 @@ variable "gcp_created_folders" {
   description = "List of folders to create in the main bucket on the ML platform"
   type        = list(string)
   default = [
-    "raw/"
+    "raw/",
+    "primary/",
+    "pipeline_root/"
   ]
 }
 
