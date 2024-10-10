@@ -310,6 +310,7 @@ resource "google_cloudbuildv2_connection" "gcp_github_connexion" {
   location = var.gcp_region
   name     = "GitHub"
   github_config {
+    app_installation_id = 49833420
     authorizer_credential {
       oauth_token_secret_version = google_secret_manager_secret_version.gcp_secret_versions["gh_pat_secret"].id
     }
@@ -346,6 +347,7 @@ resource "google_cloudbuild_trigger" "gcp_build_trigger" {
     _PYTHONVERSION = "3.10.13",
     _BASE_VERSION = "20.04"
   }
+  depends_on = [google_cloudbuildv2_repository.github_repo]
 }
 
 
