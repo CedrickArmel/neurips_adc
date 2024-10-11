@@ -33,7 +33,8 @@ variable "gcp_created_folders" {
   default = [
     "raw/",
     "primary/",
-    "pipeline_root/"
+    "pipeline_root/",
+    "logs/"
   ]
 }
 
