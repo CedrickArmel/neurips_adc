@@ -27,7 +27,7 @@ steps:
     - DOCKERHUB_TOKEN
 logsBucket: ${_LOG_BUCKET}
 options:
-  machineType: 'E2_HIGHCPU_32'
+  machineType: 'N1_HIGHCPU_8'
 availableSecrets:
   secretManager:
     - versionName: projects/$PROJECT_NUMBER/secrets/neurips-adc-docker-username/versions/1
