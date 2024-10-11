@@ -344,8 +344,9 @@ resource "google_cloudbuild_trigger" "gcp_build_trigger" {
   substitutions = {
     _DEVICE = "gpu",
     _PYTHONVERSION = "3.10.13",
-    _BASE_VERSION = "20.04"
-    _LOG_BUCKET = "${var.gcp_secrets["bucket_secret"].data}/logs"
+    _BASE_VERSION = "20.04",
+    _LOG_BUCKET = "${var.gcp_secrets["bucket_secret"].data}/logs",
+    _IMAGE = "drxc/neurips"
   }
 }
 
@@ -406,4 +407,14 @@ resource "google_compute_instance" "gcp_vm" {
     scopes = ["cloud-platform"]
   }
   allow_stopping_for_update = true
+}
+
+######################
+# Artifact registry
+
+resource "google_artifact_registry_repository" "gcp_registry" {
+  location      = var.gcp_region
+  repository_id = "drxc"
+  description   = "The repository to store the project's docker images"
+  format        = "DOCKER"
 }
