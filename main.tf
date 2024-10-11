@@ -345,6 +345,7 @@ resource "google_cloudbuild_trigger" "gcp_build_trigger" {
     _DEVICE = "gpu",
     _PYTHONVERSION = "3.10.13",
     _BASE_VERSION = "20.04"
+    _LOG_BUCKET = "${var.gcp_secrets["bucket_secret"].data}/logs"
   }
 }
 
