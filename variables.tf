@@ -67,7 +67,7 @@ variable "gcp_service_accounts" {
         "roles/datapipelines.admin",
         "roles/ml.developer",
         "roles/secretmanager.secretAccessor",
-        "roles/storage.objectUser",
+        "roles/storage.objectAdmin",
       ]
       sa_id = "neurips-ml-sa"
       name  = "Core ML tasks SA"
