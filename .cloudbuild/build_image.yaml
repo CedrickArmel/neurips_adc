@@ -32,5 +32,5 @@ availableSecrets:
       env: DOCKERHUB_USERNAME
     - versionName: projects/$PROJECT_NUMBER/secrets/neurips-adc-docker-token/versions/1
       env: DOCKERHUB_TOKEN
-    - versionName: projects/$PROJECT_NUMBER/secrets/bucket_secret/versions/2
+    - versionName: projects/386194999560/secrets/neurips-adc-bucket/versions/2
       env: BUCKET
