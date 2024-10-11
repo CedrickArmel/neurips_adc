@@ -65,6 +65,7 @@ variable "gcp_service_accounts" {
         "roles/dataflow.developer",
         "roles/dataform.editor",
         "roles/datapipelines.admin",
+        "roles/logging.logWriter",
         "roles/ml.developer",
         "roles/secretmanager.secretAccessor",
         "roles/storage.admin",
