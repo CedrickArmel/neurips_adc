@@ -335,9 +335,8 @@ resource "google_cloudbuild_trigger" "gcp_build_trigger" {
   name     = "build-base-image"
   filename = ".cloudbuild/build_image.yaml"
   service_account = google_service_account.gcp_sa["gcp_ml_sa"].id
-  github {
-    owner = "CedrickArmel"
-    name  = "neurips_adc"
+  repository_event_config {
+    repository = google_cloudbuildv2_repository.github_repo.id
     push {
       branch = "^main$"
     }
@@ -347,7 +346,6 @@ resource "google_cloudbuild_trigger" "gcp_build_trigger" {
     _PYTHONVERSION = "3.10.13",
     _BASE_VERSION = "20.04"
   }
-  depends_on = [google_cloudbuildv2_repository.github_repo]
 }
 
 
