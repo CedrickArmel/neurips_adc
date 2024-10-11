@@ -1,0 +1,9 @@
+# Exclure tout par défaut
+*
+
+# Autoriser uniquement les dossiers/fichiers spécifiques
+!src/
+!poetry.lock
+!pyproject.toml
+!conf/base/
+!.env

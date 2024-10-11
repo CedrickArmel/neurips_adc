@@ -335,11 +335,10 @@ resource "google_cloudbuild_trigger" "gcp_build_trigger" {
   name     = "build-base-image"
   filename = ".cloudbuild/build_image.yaml"
   service_account = google_service_account.gcp_sa["gcp_ml_sa"].id
-  repository_event_config {
+   source_to_build {
     repository = google_cloudbuildv2_repository.github_repo.id
-    push {
-      branch = "^main$"
-    }
+    ref = "refs/heads/main"
+    repo_type = "GITHUB"
   }
   substitutions = {
     _DEVICE = "gpu",
