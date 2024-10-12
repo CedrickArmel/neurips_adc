@@ -105,10 +105,10 @@ class ETLOptions(PipelineOptions):
 def run_pipeline(argv: list | None = None, save_session: bool = True):
     parser = argparse.ArgumentParser()
     _, pipeline_args = parser.parse_known_args(argv)
-    etloptions = ETLOptions(pipeline_args).view_as(SetupOptions)
-    etloptions.save_main_session = save_session
-    bucket = etloptions.source.get().split("/")[0]
-    folder = "/".join(etloptions.source.get().split("/")[1:])
+    etloptions = ETLOptions(pipeline_args)
+    etloptions.view_as(SetupOptions).save_main_session = save_session
+    bucket = etloptions.source.split("/")[0]
+    folder = "/".join(etloptions.source.split("/")[1:])
     with beam.Pipeline(options=etloptions) as pipeline:
         uris = get_raw_data_uris(bucket, folder)
         _ = (
@@ -117,13 +117,13 @@ def run_pipeline(argv: list | None = None, save_session: bool = True):
             | "Data calibration"  # noqa: W503
             >> beam.ParDo(  # noqa: W503
                 CalibrationFn(
-                    etloptions.cutinf.get(),
-                    etloptions.cutsup.get(),
-                    etloptions.mask.get(),
-                    etloptions.corr.get(),
-                    etloptions.dark.get(),
-                    etloptions.flat.get(),
-                    etloptions.binning.get(),
+                    etloptions.cutinf,
+                    etloptions.cutsup,
+                    etloptions.mask,
+                    etloptions.corr,
+                    etloptions.dark,
+                    etloptions.flat,
+                    etloptions.binning,
                 )
             )
             | "Collection merging"  # noqa: W503
