@@ -16,6 +16,7 @@ variable "gcp_enabled_services" {
     "dataform.googleapis.com",
     "datapipelines.googleapis.com",
     "cloudscheduler.googleapis.com",
+    "iamcredentials.googleapis.com",
     "iam.googleapis.com",
     "iap.googleapis.com",
     "ml.googleapis.com",
@@ -68,6 +69,7 @@ variable "gcp_service_accounts" {
         "roles/logging.logWriter",
         "roles/ml.developer",
         "roles/secretmanager.secretAccessor",
+        "roles/iam.serviceAccountTokenCreator",
         "roles/storage.admin",
       ]
       sa_id = "neurips-ml-sa"
@@ -86,15 +88,8 @@ variable "gha_assertion_aud" {
 variable "gha_assertion_sub" {
   description = "GHA workload identity JWk token sub attribute"
   type        = string
-  default     = "CedrickArmel/neurips_adc:ref:refs/heads/main"
+  default     = "repo:CedrickArmel/neurips_adc:ref:refs/heads/main"
 }
-
-variable "gha_assertion_actor" {
-  description = "GHA workload identity JWk token actor attribute"
-  type        = string
-  default     = "CedrickArmel"
-}
-
 
 #########
 # Secrets

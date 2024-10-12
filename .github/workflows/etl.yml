@@ -43,7 +43,8 @@ jobs:
             chmod +x scripts/trigger.sh
             ./scripts/trigger.sh -p ${{ secrets.PROJECT_ID }} \
                 -r ${{ secrets.REGION }} \
-                -t build-beam-image
+                -t build-beam-image \
+                -i ${{ secrets.SERVICE_ACCOUNT }}
       -
         name: Install Poetry
         run: |
