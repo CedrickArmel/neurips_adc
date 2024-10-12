@@ -22,60 +22,132 @@
 # SOFTWARE.
 
 # mypy: disable-error-code="misc, no-untyped-def, type-arg"
-# noqa: W503
 
 import argparse
 import logging
 
 import apache_beam as beam
 import tensorflow as tf
-from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    _BeamArgumentParser,
+)
+from apache_beam.options.value_provider import RuntimeValueProvider
 
 from neuripsadc.etl.ops import get_raw_data_uris, save_dataset_to_tfrecords
 from neuripsadc.etl.transforms import CalibrationFn, CombineDataFn
 
 
+class ETLOptions(PipelineOptions):
+    """Custom Beam options for the ETL pipeline"""
+
+    @classmethod
+    def _add_argparse_args(cls, parser: _BeamArgumentParser) -> None:
+        parser.add_value_provider_argument(
+            "--source",
+            type=str,
+            required=True,
+            help="GCS path containing the source data.",
+        )
+        parser.add_value_provider_argument(
+            "--output",
+            type=str,
+            required=True,
+            help="GCS URI or local path where the resulting TFRecord dataset will be stored (e.g., gs://bucket/output/ds.tfrecords).",
+        )
+        parser.add_value_provider_argument(
+            "--cutinf",
+            type=int,
+            required=False,
+            default=39,
+            help="Lower bound (inclusive) for the cut range on the data. Default is 39.",
+        )
+        parser.add_value_provider_argument(
+            "--cutsup",
+            type=int,
+            required=False,
+            default=321,
+            help="Upper bound (inclusive) for the cut range on the data. Default is 321.",
+        )
+        parser.add_value_provider_argument(
+            "--mask",
+            required=False,
+            action="store_true",
+            help="Apply a mask to the hot and dead pixels in the data.",
+        )
+        parser.add_value_provider_argument(
+            "--corr",
+            required=False,
+            action="store_true",
+            help="Apply non-linear accumulation corrections to the data.",
+        )
+        parser.add_value_provider_argument(
+            "--dark",
+            required=False,
+            action="store_true",
+            help="Apply current dark correction.",
+        )
+        parser.add_value_provider_argument(
+            "--flat",
+            required=False,
+            action="store_true",
+            help="Apply calibration against a flat (uniform signal).",
+        )
+        parser.add_value_provider_argument(
+            "--binning",
+            type=int,
+            required=False,
+            default=30,
+            help="Binning factor for the data, which aggregates adjacent images to reduce data size. Default is 30.",
+        )
+
+
+class LogValueProviderFn(beam.DoFn):
+    def process(self):
+        args = [
+            "source",
+            "output",
+            "cutinf",
+            "cutsup",
+            "mask",
+            "corr",
+            "dark",
+            "flat",
+            "binning",
+        ]
+        for arg in args:
+            logging.info(f"""{arg} : {RuntimeValueProvider.get_value(arg, str, "")}""")
+
+
 def run_pipeline(argv: list | None = None, save_session: bool = True):
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--source",
-        type=str,
-        required=True,
-        help="Data source location. eg: bucket/folder",
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        required=True,
-        help="Output location uri for the TFRecord dataset",
-    )
-    parser.add_argument("--cutinf", type=int, required=False, default=39, help="")
-    parser.add_argument("--cutsup", type=int, required=False, default=321, help="")
-    parser.add_argument("--mask", required=False, action="store_true", help="")
-    parser.add_argument("--corr", required=False, action="store_true", help="")
-    parser.add_argument("--dark", required=False, action="store_true", help="")
-    parser.add_argument("--flat", required=False, action="store_true", help="")
-    parser.add_argument("--binning", type=int, required=False, default=30, help="")
-    known_args, pipeline_args = parser.parse_known_args(argv)
-    bucket = known_args.source.split("/")[0]
-    folder = "/".join(known_args.source.split("/")[1:])
-    options = PipelineOptions(pipeline_args)
-    options.view_as(SetupOptions).save_main_session = save_session
-    with beam.Pipeline(options=options) as pipeline:
+    _, pipeline_args = parser.parse_known_args(argv)
+    etloptions = ETLOptions(pipeline_args).view_as(SetupOptions)
+    etloptions.save_main_session = save_session
+    bucket = etloptions.source.get().split("/")[0]
+    folder = "/".join(etloptions.source.get().split("/")[1:])
+    with beam.Pipeline(options=etloptions) as pipeline:
         uris = get_raw_data_uris(bucket, folder)
+        _ = (
+            pipeline
+            | beam.Create([None])  # noqa: W503
+            | "Options and arguments logging"  # noqa: W503
+            >> beam.ParDo(LogValueProviderFn())  # noqa: W503
+        )
         _ = (
             pipeline
             | "Create uris collection" >> beam.Create(uris)  # noqa: W503
             | "Data calibration"  # noqa: W503
             >> beam.ParDo(  # noqa: W503
                 CalibrationFn(
-                    known_args.cutinf,
-                    known_args.cutsup,
-                    known_args.mask,
-                    known_args.corr,
-                    known_args.dark,
-                    known_args.flat,
-                    known_args.binning,
+                    etloptions.cutinf.get(),
+                    etloptions.cutsup.get(),
+                    etloptions.mask.get(),
+                    etloptions.corr.get(),
+                    etloptions.dark.get(),
+                    etloptions.flat.get(),
+                    etloptions.binning.get(),
                 )
             )
             | "Collection merging"  # noqa: W503
@@ -84,7 +156,7 @@ def run_pipeline(argv: list | None = None, save_session: bool = True):
             >> beam.Map(  # noqa: W503
                 lambda x: save_dataset_to_tfrecords(
                     element=x,
-                    uri=known_args.output,
+                    uri=etloptions.output.get(),
                     output_signature=(
                         tf.TensorSpec(shape=None, dtype=tf.int64),
                         tf.TensorSpec(shape=None, dtype=tf.float64),
