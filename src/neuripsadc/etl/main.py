@@ -117,7 +117,10 @@ class LogValueProviderFn(beam.DoFn):
             "binning",
         ]
         for arg in args:
-            logging.info(f"""{arg} : {RuntimeValueProvider.get_value(arg, str, "")}""")
+            value = RuntimeValueProvider.get_value(arg, str, "")
+            if value is None:
+                value = "No value provided"
+            logging.info(f"Argument '{arg}' has value: {value}")
 
 
 def run_pipeline(argv: list | None = None, save_session: bool = True):
