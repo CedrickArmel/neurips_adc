@@ -69,6 +69,7 @@ variable "gcp_service_accounts" {
         "roles/logging.logWriter",
         "roles/ml.developer",
         "roles/secretmanager.secretAccessor",
+        "roles/iam.serviceAccountUser",
         "roles/iam.serviceAccountTokenCreator",
         "roles/storage.admin",
       ]
