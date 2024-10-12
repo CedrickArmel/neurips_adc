@@ -37,8 +37,8 @@ tox-gh-actions = "^3.2.0"
 kaggle = "^1.6.17"
 
 
-[tool.poetry.group.etl.dependencies]
-apache-beam = {extras = ["gcp"], version = "^2.58.1"}
+[tool.poetry.scripts]
+run_pipeline = 'neuripsadc.etl.main:run_pipeline'
 
 [tool.pylint.format]
 max-line-length = "88"

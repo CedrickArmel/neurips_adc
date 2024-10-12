@@ -349,6 +349,25 @@ resource "google_cloudbuild_trigger" "gcp_build_trigger" {
   }
 }
 
+resource "google_cloudbuild_trigger" "gcp_build_beam_trigger" {
+  location = var.gcp_region
+  name     = "build-beam-image"
+  filename = ".cloudbuild/build_beam_image.yaml"
+  service_account = google_service_account.gcp_sa["gcp_ml_sa"].id
+   source_to_build {
+    repository = google_cloudbuildv2_repository.github_repo.id
+    ref = "refs/heads/main"
+    repo_type = "GITHUB"
+  }
+  substitutions = {
+    _DEVICE = "cpu",
+    _PYTHONVERSION = "3.10.13",
+    _BASE_VERSION = "20.04",
+    _LOG_BUCKET = "${var.gcp_secrets["bucket_secret"].data}/logs",
+    _IMAGE = "drxc/neurips"
+  }
+}
+
 
 ######################################
 # VMs

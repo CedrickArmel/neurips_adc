@@ -1,6 +1,6 @@
 ARG BASE_VERSION=20.04
 ARG PYTHONVERSION=3.10.13
-ARG DEVICE=gpu
+ARG DEVICE=cpu
 
 FROM drxc/python:${PYTHONVERSION}-ubuntu${BASE_VERSION}-${DEVICE}
 
@@ -25,4 +25,4 @@ WORKDIR ${HOME}/app
 
 ENV PYTHONPATH=/
 
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/opt/apache/beam/boot" ]
