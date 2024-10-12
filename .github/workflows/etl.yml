@@ -25,13 +25,6 @@ jobs:
         name: Checkout
         uses: actions/checkout@v4
       -
-        name: Build beam runner image
-        run: |
-            chmod +x scripts/trigger.sh
-            ./scripts/trigger.sh -p ${{ secrets.PROJECT_ID }} \
-                -r ${{ secrets.REGION }} \
-                -t build-beam-image
-      -
         id: gcp_auth
         name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2.1.3
@@ -44,6 +37,13 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
           version: '>= 363.0.0'
+      -
+        name: Build beam runner image
+        run: |
+            chmod +x scripts/trigger.sh
+            ./scripts/trigger.sh -p ${{ secrets.PROJECT_ID }} \
+                -r ${{ secrets.REGION }} \
+                -t build-beam-image
       -
         name: Install Poetry
         run: |
