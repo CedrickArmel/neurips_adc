@@ -205,7 +205,7 @@ resource "google_iam_workload_identity_pool_provider" "gcp_gha_oidc_provider" {
     "google.subject"  = "assertion.sub"
     "attribute.aud"   = "assertion.aud"
   }
-  attribute_condition = "assertion.sub=='${var.gha_assertion_sub}' && assertion.aud=='${var.gha_assertion_aud}'"
+  attribute_condition = "assertion.sub=='${var.gha_assertion_sub}'"
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }

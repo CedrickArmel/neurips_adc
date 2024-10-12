@@ -4,7 +4,7 @@ usage() {
     exit 1
 }
 
-while getopts "p:r:t:b:s:" opt; do
+while getopts "p:r:t:b:s:i:" opt; do
     case $opt in
         p) project="$OPTARG";;
         r) region="$OPTARG";;
