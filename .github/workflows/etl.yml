@@ -59,10 +59,12 @@ jobs:
         run: |
           source env/bin/activate
           run_pipeline --source=${{ secrets.BUCKET }}/raw \
-            --output=${{ secrets.BUCKET }}/primary \
+            --output=gs://${{ secrets.BUCKET }}/primary/neurips-dataset-c1d1f1m1b30sum.tfrecords \
+            --mask --flat --corr --dark \
             --runner=${{ vars.RUNNER}} \
+            --worker_disk_type=compute.googleapis.com/projects/${{ secrets.PROJECT_ID }}/zones/${{ secrets.REGION }}/diskTypes/DISK_TYPE
             --project=${{ secrets.PROJECT_ID }} \
             --region=${{ secrets.REGION }} \
-            --temp_location=${{ secrets.BUCKET }}/pipeline_root \
+            --temp_location=gs://${{ secrets.BUCKET }}/pipeline_root/ \
             --experiments=use_runner_v2 \
             --sdk_container_image=${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ vars.IMAGE }}:beam-cpu

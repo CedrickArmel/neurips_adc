@@ -105,7 +105,9 @@ class ETLOptions(PipelineOptions):
 def run_pipeline(argv: list | None = None, save_session: bool = True):
     parser = argparse.ArgumentParser()
     _, pipeline_args = parser.parse_known_args(argv)
-    etloptions = ETLOptions(pipeline_args)
+    etloptions = ETLOptions(
+        pipeline_args, machine_type="n2-custom-2-32768-ext", disk_size_gb=210
+    )
     etloptions.view_as(SetupOptions).save_main_session = save_session
     bucket = etloptions.source.split("/")[0]
     folder = "/".join(etloptions.source.split("/")[1:])
