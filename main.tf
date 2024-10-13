@@ -401,7 +401,7 @@ EOF
 resource "google_compute_instance" "gcp_vm" {
   name         = "neurips-adc-vm"
   zone         = "${var.gcp_region}-a"
-  machine_type = "n2-standard-8"
+  machine_type = "n1-custom-4-32768-ext"
 
   boot_disk {
     initialize_params {
@@ -410,10 +410,6 @@ resource "google_compute_instance" "gcp_vm" {
       type  = "pd-standard"
     }
   }
-  scratch_disk {
-    interface = "NVME"
-  }
-
   network_interface {
     network = "default"
     access_config {}
