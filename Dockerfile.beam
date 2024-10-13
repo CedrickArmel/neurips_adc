@@ -18,7 +18,9 @@ RUN set -eux ; \
     source ${HOME}/.bashrc ; \
     pyenv global ${PYTHONVERSION} ; \
     poetry config virtualenvs.create false\
-    poetry install --without dev ;
+    poetry install --without dev --no-root ; \
+    poetry build ; \
+    pip install dist/*.whl ;
 
 WORKDIR ${HOME}
 
