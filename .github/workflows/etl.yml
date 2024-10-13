@@ -62,7 +62,7 @@ jobs:
             --output=gs://${{ secrets.BUCKET }}/primary/neurips-dataset-c1d1f1m1b30sum.tfrecords \
             --mask --flat --corr --dark \
             --runner=${{ vars.RUNNER}} \
-            --worker_disk_type=compute.googleapis.com/projects/${{ secrets.PROJECT_ID }}/zones/${{ secrets.REGION }}/diskTypes/DISK_TYPE \
+            --worker_disk_type=compute.googleapis.com/projects/${{ secrets.PROJECT_ID }}/zones/${{ secrets.REGION }}/diskTypes/pd-ssd \
             --project=${{ secrets.PROJECT_ID }} \
             --region=${{ secrets.REGION }} \
             --temp_location=gs://${{ secrets.BUCKET }}/pipeline_root/ \
