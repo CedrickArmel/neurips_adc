@@ -111,39 +111,40 @@ def run_pipeline(argv: list | None = None, save_session: bool = True):
     etloptions.view_as(SetupOptions).save_main_session = save_session
     bucket = etloptions.source.split("/")[0]
     folder = "/".join(etloptions.source.split("/")[1:])
-    with beam.Pipeline(options=etloptions) as pipeline:
-        uris = get_raw_data_uris(bucket, folder)
-        _ = (
-            pipeline
-            | "Create uris collection" >> beam.Create(uris)  # noqa: W503
-            | "Data calibration"  # noqa: W503
-            >> beam.ParDo(  # noqa: W503
-                CalibrationFn(
-                    etloptions.cutinf,
-                    etloptions.cutsup,
-                    etloptions.mask,
-                    etloptions.corr,
-                    etloptions.dark,
-                    etloptions.flat,
-                    etloptions.binning,
-                )
-            )
-            | "Collection merging"  # noqa: W503
-            >> beam.CombineGlobally(CombineDataFn())  # noqa: W503
-            | "Data saving"  # noqa: W503
-            >> beam.Map(  # noqa: W503
-                lambda x: save_dataset_to_tfrecords(
-                    element=x,
-                    uri=etloptions.output.get(),
-                    output_signature=(
-                        tf.TensorSpec(shape=None, dtype=tf.int64),
-                        tf.TensorSpec(shape=None, dtype=tf.float64),
-                        tf.TensorSpec(shape=None, dtype=tf.float64),
-                        tf.TensorSpec(shape=None, dtype=tf.float64),
-                    ),
-                )
+    uris = get_raw_data_uris(bucket, folder)
+    pipeline = beam.Pipeline(options=etloptions)
+    (
+        pipeline
+        | "Create uris collection" >> beam.Create(uris)  # noqa: W503
+        | "Data calibration"  # noqa: W503
+        >> beam.ParDo(  # noqa: W503
+            CalibrationFn(
+                etloptions.cutinf,
+                etloptions.cutsup,
+                etloptions.mask,
+                etloptions.corr,
+                etloptions.dark,
+                etloptions.flat,
+                etloptions.binning,
             )
         )
+        | "Collection merging"  # noqa: W503
+        >> beam.CombineGlobally(CombineDataFn())  # noqa: W503
+        | "Data saving"  # noqa: W503
+        >> beam.Map(  # noqa: W503
+            lambda x: save_dataset_to_tfrecords(
+                element=x,
+                uri=etloptions.output.get(),
+                output_signature=(
+                    tf.TensorSpec(shape=None, dtype=tf.int64),
+                    tf.TensorSpec(shape=None, dtype=tf.float64),
+                    tf.TensorSpec(shape=None, dtype=tf.float64),
+                    tf.TensorSpec(shape=None, dtype=tf.float64),
+                ),
+            )
+        )
+    )
+    _ = pipeline.run().wait_until_finish(duration=10)
 
 
 if __name__ == "__main__":
