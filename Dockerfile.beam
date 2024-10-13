@@ -16,12 +16,11 @@ WORKDIR ${HOME}/app
 RUN set -eux ; \
     \
     source ${HOME}/.bashrc ; \
-    pyenv virtualenv ${PYTHONVERSION} myenv ; \
-    pyenv activate myenv ; \
-    poetry install --without dev ; \
-    pyenv global myenv ;
+    pyenv global ${PYTHONVERSION} ; \
+    poetry config virtualenvs.create false\
+    poetry install --without dev ;
 
-WORKDIR ${HOME}/app
+WORKDIR ${HOME}
 
 ENV PYTHONPATH=/
 
