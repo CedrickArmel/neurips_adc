@@ -67,4 +67,5 @@ jobs:
             --region=${{ secrets.REGION }} \
             --temp_location=gs://${{ secrets.BUCKET }}/pipeline_root/ \
             --experiments=use_runner_v2 \
-            --sdk_container_image=${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ vars.IMAGE }}:beam-cpu
+            --sdk_container_image=${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ vars.IMAGE }}:beam-cpu \
+            --sdk_location=container
