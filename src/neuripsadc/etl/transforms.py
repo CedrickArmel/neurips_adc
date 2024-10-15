@@ -30,6 +30,9 @@ import pandas as pd
 import tensorflow as tf
 from astropy.stats import sigma_clip
 
+from neuripsadc.etl.ops import make_example
+from neuripsadc.utilis import save_to_tfrecords
+
 
 class CalibrationFn(beam.DoFn):
     """Perfroms the raw data calibration."""
@@ -42,6 +45,7 @@ class CalibrationFn(beam.DoFn):
         corr: bool,
         dark: bool,
         flat: bool,
+        signature: tuple,
         binning: int | None = None,
     ):
         """
@@ -53,6 +57,7 @@ class CalibrationFn(beam.DoFn):
             corr (bool): Wheteher to apply linear correction.
             dark (bool): Whether to apply current dark correction.
             flat (bool): Whether to apply flat pixels correction.
+            signature (tuple): List of tf.TypeSpec
         """
 
         self.CUT_INF = cut_inf
@@ -62,9 +67,10 @@ class CalibrationFn(beam.DoFn):
         self.CORR = corr
         self.DARK = dark
         self.FLAT = flat
+        self.signature = signature
 
     def process(self, element):  # type: ignore
-        id, uris = element
+        id, uris, timestamp = element
         airs_data, fgs_data, info_data = self._load_data(id, uris)
         airs_signal = self._calibrate_airs_data(airs_data, info_data)
         airs_signal = tf.convert_to_tensor(airs_signal.reshape(1, *airs_signal.shape))
@@ -74,7 +80,21 @@ class CalibrationFn(beam.DoFn):
             np.array([np.nan]) if info_data["labels"] is None else info_data["labels"]
         )
         labels = tf.convert_to_tensor(labels.reshape(1, *labels.shape))
-        return [(int(id), airs_signal, fgs_signal, labels)]
+        record = tf.data.Dataset.from_generator(
+            lambda: iter([(int(id), airs_signal, fgs_signal, labels)]),
+            output_signature=self.signature,
+        )
+        record = record.map(
+            lambda id, airs, fgs, target: tf.py_function(
+                func=make_example, inp=[id, airs, fgs, target], Tout=tf.string
+            )
+        )
+        bucket = uris[0].split("/")[2]
+        tmp_output_path = (
+            f"gs://{bucket}/pipeline_root/neurips-etl/{timestamp}/record-{id}.tfrecord"
+        )
+        save_to_tfrecords(record, tmp_output_path)
+        return [tmp_output_path]
 
     def _calibrate_airs_data(
         self, data: dict[str, pd.DataFrame], info: dict[str, pd.DataFrame]

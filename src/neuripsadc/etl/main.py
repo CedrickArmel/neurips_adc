@@ -34,7 +34,7 @@ from apache_beam.options.pipeline_options import (
     _BeamArgumentParser,
 )
 
-from neuripsadc.etl.ops import get_raw_data_uris, save_dataset_to_tfrecords
+from neuripsadc.etl.ops import gen_name, get_raw_data_uris, save_dataset_to_tfrecords
 from neuripsadc.etl.transforms import CalibrationFn, CombineDataFn
 
 
@@ -53,7 +53,7 @@ class ETLOptions(PipelineOptions):
             "--output",
             type=str,
             required=True,
-            help="GCS URI or local path where the resulting TFRecord dataset will be stored (e.g., gs://bucket/output/ds.tfrecords).",
+            help="GCS folder URI or local path where the resulting TFRecord dataset will be stored (e.g., gs://bucket/output/).",
         )
         parser.add_argument(
             "--cutinf",
@@ -106,12 +106,19 @@ def run_pipeline(argv: list | None = None, save_session: bool = True):
     parser = argparse.ArgumentParser()
     _, pipeline_args = parser.parse_known_args(argv)
     etloptions = ETLOptions(
-        pipeline_args, machine_type="n2-custom-2-32768-ext", disk_size_gb=210
+        pipeline_args, machine_type="n2-custom-8-131072-ext", disk_size_gb=500
     )
     etloptions.view_as(SetupOptions).save_main_session = save_session
     bucket = etloptions.source.split("/")[0]
     folder = "/".join(etloptions.source.split("/")[1:])
     uris = get_raw_data_uris(bucket, folder)
+    etloptions.output = etloptions.output + gen_name(etloptions)
+    signature = (
+        tf.TensorSpec(shape=None, dtype=tf.int64),
+        tf.TensorSpec(shape=None, dtype=tf.float64),
+        tf.TensorSpec(shape=None, dtype=tf.float64),
+        tf.TensorSpec(shape=None, dtype=tf.float64),
+    )
     pipeline = beam.Pipeline(options=etloptions)
     (
         pipeline
@@ -125,6 +132,7 @@ def run_pipeline(argv: list | None = None, save_session: bool = True):
                 etloptions.corr,
                 etloptions.dark,
                 etloptions.flat,
+                signature,
                 etloptions.binning,
             )
         )
@@ -134,13 +142,7 @@ def run_pipeline(argv: list | None = None, save_session: bool = True):
         >> beam.Map(  # noqa: W503
             lambda x: save_dataset_to_tfrecords(
                 element=x,
-                uri=etloptions.output.get(),
-                output_signature=(
-                    tf.TensorSpec(shape=None, dtype=tf.int64),
-                    tf.TensorSpec(shape=None, dtype=tf.float64),
-                    tf.TensorSpec(shape=None, dtype=tf.float64),
-                    tf.TensorSpec(shape=None, dtype=tf.float64),
-                ),
+                uri=etloptions.output,
             )
         )
     )
