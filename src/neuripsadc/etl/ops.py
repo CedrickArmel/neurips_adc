@@ -21,11 +21,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# mypy: disable-error-code="misc, no-untyped-def, type-arg"
 from collections import defaultdict
+from datetime import datetime
 from typing import Any
 
 import tensorflow as tf
+
+# mypy: disable-error-code="misc, no-untyped-def, type-arg"
+from apache_beam.options.pipeline_options import PipelineOptions
 
 from neuripsadc.utilis import list_blobs, save_to_tfrecords
 
@@ -69,7 +72,7 @@ def split_key_value(path: str) -> tuple[str, str | None]:
 
 def get_raw_data_uris(
     bucket_name: str, folder: str | None = None
-) -> list[tuple[str, list[str]]]:
+) -> list[tuple[str, list[str], str]]:
     """
     Get the data URIs in the Google Cloud Storage bucket.
 
@@ -88,7 +91,10 @@ def get_raw_data_uris(
     ]
     non_raw_data = [item for item in key_value_pairs if item[0] != "raw"]
     grouped_data = group_by_key(non_raw_data)
-    result = [(key, value + raw_data) for key, value in grouped_data]
+    result = [
+        (key, value + raw_data, datetime.now().strftime("%Y%m%d%H%M%S"))
+        for key, value in grouped_data
+    ]
     return result
 
 
@@ -129,26 +135,23 @@ def make_example(pid: int, airs: tf.Tensor, fgs: tf.Tensor, target: tf.Tensor):
 def save_dataset_to_tfrecords(
     element: list[Any],
     uri: str,
-    output_signature: tuple[Any, Any, Any, Any] | None = None,
 ):
-    """Creates a tf.data.Dataset form a PCollection and save it to a TFRecord.
+    """Creates a tf.data.Dataset form a PCollection of uris and save it to a TFRecord.
 
     Args:
-        element (list): _description_
+        element (list): PCollection of uris
         uri (str): Location to save the data. Can be a filesystem or a (GCS) bucket.
-        output_signature (tuple | None, optional): Tensorflow Output type\
-              specification. Defaults to None.
     """
-    examples = element[0]
-    dataset = tf.data.Dataset.from_generator(
-        lambda: iter(examples),
-        # output signature important car sans ça TF essaye de concatener tous
-        # les éléments du tuple dans un unique tensor ce qui crée des erreurs.
-        output_signature=output_signature,
+    filenames = element[0]
+    dataset = tf.data.TFRecordDataset(
+        filenames=tf.data.Dataset.from_tensor_slices(filenames),
+        num_parallel_reads=tf.data.AUTOTUNE,
     )
-    dataset = dataset.map(
-        lambda id, airs, fgs, target: tf.py_function(
-            func=make_example, inp=[id, airs, fgs, target], Tout=tf.string
-        )
-    )
+    dataset = dataset.prefetch(tf.data.AUTOTUNE)
     save_to_tfrecords(dataset, uri)
+
+
+def gen_name(option: PipelineOptions):
+    """Generate name from options"""
+    code = f"c{int(option.corr)}d{int(option.dark)}f{int(option.flat)}m{int(option.mask)}b{int(option.binning)}"
+    return f"neurips-dataset-{code}.tfrecords"
