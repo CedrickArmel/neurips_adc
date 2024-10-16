@@ -400,7 +400,7 @@ EOF
 
 resource "google_compute_instance" "gcp_vm" {
   name         = "neurips-adc-vm"
-  zone         = "${var.gcp_region}-a"
+  zone         = "${var.gcp_region}"
   machine_type = "n1-custom-4-32768-ext"
 
   boot_disk {
